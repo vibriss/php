@@ -9,7 +9,7 @@ function text_analyse($str_input) {                                             
 }
     
 function output_to_csv($file, $str_input) {                                     //функция, в которой осуществляется запись в файл
-    $f = fopen("./csvs/" . $file, "w+");                                        //открытие файла для записи отчета
+    $f = fopen("./csvs/" . $file, "w+");                                        //создание файла в папке csvs для записи отчета
     list($new_arr, $arr) = text_analyse($str_input);                            //присвоение массивам результатов вызова функции
     foreach ($new_arr as $word => $count) {                                     //перебор значений массива
         $arr_to_csv = array ($word, $count);                                    //создание массива для записи строки в .csv
