@@ -1,43 +1,52 @@
 <?php
+//подключение файла с функцией connect
+require "index.php";
 
-function text_analyse($str_input) {                                             //функция, в которой анализируется текст
-    $str_lowered = mb_strtolower($str_input);					//преобразование в нижний регистр
-    $str_trimmed = trim($str_lowered);						//удаление пробелов из начала и конца строки
-    $arr = preg_split("/[\s,':\.]+/", $str_trimmed, null, PREG_SPLIT_NO_EMPTY);	//разделение строки на отдельные слова
-    $new_arr = array_count_values($arr);                                        //заполнение ассоциативного массива, ключами которого являются слова, а значениями - количество повторений
-    return [$new_arr, $arr];                                                    //вывод результатов функции
+//функция, в которой анализируется текст
+function text_analyse($str_input) {
+    //очистка строки от символов
+    $str_cleaned = preg_replace('/[^ a-zа-яё\d]/ui', '', $str_input);
+    //преобразование в нижний регистр
+    $str_lowered = mb_strtolower($str_cleaned);					
+    //удаление пробелов из начала и конца строки
+    $str_trimmed = trim($str_lowered);						
+    //разделение строки на отдельные слова
+    $arr = preg_split("/ /", $str_trimmed, null, PREG_SPLIT_NO_EMPTY);	
+    //заполнение ассоциативного массива, ключами которого являются слова, а значениями - количество повторений
+    $new_arr = array_count_values($arr);                                        
+    //вывод результатов функции
+    return [$new_arr, $arr];                                                    
 }
-    
-function output_to_csv($file, $str_input) {                                     //функция, в которой осуществляется запись в файл
-    $f = fopen("./csvs/" . $file, "w+");                                        //создание файла в папке csvs для записи отчета
-    list($new_arr, $arr) = text_analyse($str_input);                            //присвоение массивам результатов вызова функции
-    foreach ($new_arr as $word => $count) {                                     //перебор значений массива
-        $arr_to_csv = array ($word, $count);                                    //создание массива для записи строки в .csv
-        fputcsv($f, $arr_to_csv, " ");                                          //запись в .csv файл
+
+//запрос к текстовому полю формы
+$str_input = $_POST["text"];                                                    
+
+//если текстовое поле не пустое, выполняется следующее:
+if ($str_input != null) {                                                       
+    //вызов функции подключения(описана в index.php)
+    $pdo = connect();
+    //вызов функции анализа текста
+    list($new_arr, $arr) = text_analyse($str_input);
+    //подсчет количества слов
+    $words_count = count($arr);
+    //подготовка выражения для заполнения таблицы uploaded_text содержанием текстового поля, текущей датой, количеством слов в тексте
+    $res = $pdo->prepare('INSERT into uploaded_text (content, date, words_count) values (:content, now(), :words_count)');
+    //выполнение
+    $res->execute(array(':content'=>$str_input, ':words_count'=>$words_count));
+    //подготовка выражения для выбора значения id из таблицы uploaded_text для последнего поля content(загруженный текст), совпадающего с новым введенным текстом
+    $res = $pdo->prepare('SELECT id FROM uploaded_text WHERE content = ? order by id desc');
+    //выполнение
+    $res->execute(array($str_input));
+    //получение массива с результатом
+    $res_arr = $res->fetch();
+    //преобразование содержимого массива в строку
+    $text_id = implode($res_arr);
+    //заполнение таблицы word значением id загруженного текста, словами и количеством повторений
+    foreach ($new_arr as $word => $count) {
+        //подготовка выражения
+        $res = $pdo->prepare('INSERT into word (text_id, word, count) values (:text_id, :word, :count)');
+        //выполнение
+        $res->execute(array(':text_id'=>$text_id, ':word'=>$word, ':count'=>$count));
     }
-    fputcsv($f, array("всего", "слов", count($arr)), " ");                      //запись общего количества слов в файл
-    fclose($f);                                                                 //закрытие файла
-    echo "результат записан в ", $file, "<br><br>";
 }
-
-$str_input = $_POST["text"];                                                    //запрос к текстовому полю
-if ($str_input != null) {                                                       //если текстовое поле не пустое, выполняется следующее:
-    echo "текстовое поле: <br>", $str_input, "<br><br>";                        //вывод текста
-    $file = date("dMY_H.i.s") . "_" . md5($str_input) . ".csv";                 //присваивание имени файлу, состоящего из даты и хэша текста
-    output_to_csv($file, $str_input);                                           //вызов функции записи в файл
-}
- else {
-    echo "текстовое поле не заполнено<br><br>";                                 //если текстовое поле пустое, вывод сообщения
- }
-
-if ($_FILES["uploaded_file"]["error"] === UPLOAD_ERR_OK) {                      //запрос к файловому полю, если файл загружен без ошибок
-    $str_input = file_get_contents($_FILES["uploaded_file"]["name"]);           //считывание содержания файла в строку
-    if ($str_input != null) {                                                   //если строка не пустая, выполняется следующее:
-        echo "текст в файле: <br>", $str_input, "<br><br>";                     //вывод содержимого файла
-        $file = date("dMY_H.i.s") . "_" . md5($str_input) . ".csv";             //присваивание имени файлу, состоящего из даты и хэша текста
-        output_to_csv($file, $str_input);                                       //вызов функции записи в файл
-    }
-}
- else {
-    echo "файл не прикреплен или пустой<br><br>";                               //если файл не загружен или пустой, вывод сообщения
- }
+?>

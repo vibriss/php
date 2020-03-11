@@ -2,7 +2,7 @@
 
 //подключение к БД
 //вывод отчета
-$link = mysqli_connect("localhost", "root", "password");                          
+$link = mysqli_connect("localhost", "root", "hhhhhh");                          
 if (!$link) {                                                                   
     echo "ошибка подключения к БД<br>";         
 }

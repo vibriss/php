@@ -2,10 +2,6 @@
     <button type="submit">загрузить</button>
 </form>
 
-<form method="post" action="create.php" enctype="multipart/form-data">
-    <button type="submit">создать бд</button>
-</form>
-
 <form method="post" action="index.php" enctype="multipart/form-data">
    номер страницы в выборке по 5 строк из таблицы: 
    <input type="number" name="page"/>
@@ -19,12 +15,23 @@
 </form>
 
 <?php
-//подключение к бд
-$link = mysqli_connect("localhost", "root", "password", "userdb");                
-//вывод отчета
-if (!$link) {                                                                
-    echo "ошибка подключения к БД: " . mysqli_error($link) . "<br>";
+
+function connect() {
+    //подключение файла с данными для входа
+    require 'login_info.php';
+    //подготовка к подключению
+    $dsn = "mysql:host=$host;dbname=$db";
+    //массив опций
+    $opt = [
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    ];
+    //подключение к бд, создание объекта
+    $pdo = new PDO($dsn, $login, $password, $opt);                    
+    return $pdo;
 }
+
+$pdo = connect();
 
 //если не введен номер страницы в поле
 if (empty($_POST["page"])) {
@@ -38,12 +45,12 @@ if (empty($_POST["page"])) {
 
 //перечисление id в таблице uploaded_text
 for ($i = ($page - 1) * 5 + 1; $i <= $page * 5; $i++) {
-    //выбор текста из таблицы uploaded_text, соответствующего id
-    $query = "select content from uploaded_text where id = '$i'";
-    //запрос к бд
-    $res = mysqli_query($link, $query);
+    //подготовка выражения для выбора текста из таблицы uploaded_text, соответствующего id
+    $res = $pdo->prepare('SELECT content FROM uploaded_text WHERE id = ?');
+    //выполнение
+    $res->execute(array($i));
     //получение массива с результатом
-    $res_arr = mysqli_fetch_row($res);
+    $res_arr = $res->fetch();
     //если этот массив не пустой
     if (!empty($res_arr)) {
         //преобразование содержимого массива в строку
@@ -66,41 +73,36 @@ for ($i = ($page - 1) * 5 + 1; $i <= $page * 5; $i++) {
 if (!empty($_POST["id"])) {
     //далее будет осуществлен вывод подробностей анализа
     $id = $_POST["id"];
-    //выбор текста из таблицы uploaded_text, соответствующего введенному id
-    $query = "select content from uploaded_text where id = '$id'";
-    //запрос к бд
-    $res = mysqli_query($link, $query);
+    //подготовка выражения для выбора текста из таблицы uploaded_text, соответствующего веденному id
+    $res = $pdo->prepare('SELECT content FROM uploaded_text WHERE id = ?');
+    //выполнение
+    $res->execute(array($id));
     //получение массива с результатом
-    $res_arr = mysqli_fetch_row($res);
+    $res_arr = $res->fetch();
     //если по такому id есть текст
     if (!empty($res_arr)) {
         //преобразование содержимого массива в строку
         $str = implode($res_arr);
-        //выбор даты из таблицы uploaded_text, соответствующего введенному id
-        $query = "select date from uploaded_text where id = '$id'";
-        //запрос к бд
-        $res_date = mysqli_query($link, $query);
+        //подготовка выражения для выбора даты из таблицы uploaded_text, соответствующей введенному id
+        $res = $pdo->prepare('SELECT date FROM uploaded_text WHERE id = ?');
+        //выполнение
+        $res->execute(array($id));
         //получение массива с результатом
-        $res_date_arr = mysqli_fetch_row($res_date);
+        $res_arr = $res->fetch();
         //преобразование содержимого массива в строку
-        $date = implode($res_date_arr);
+        $date = implode($res_arr);
         //вывод текста, даты
-        echo "<br>текст: <br>" . $str . "<br>дата: " . $date . "<br>анализ: <br>";
-        //выбор слов и соответствующего количества слов из таблицы word, соответствующих введенному text_d
-        $query = "select word, count from word where text_id = '$id'";
-        //запрос к бд
-        $res_word = mysqli_query($link, $query);
-        //вывод слов и их количества
-        while ($word = mysqli_fetch_array($res_word)) {
+        echo "<br>текст: <br>" . $str . "<br>дата: " . $date . "<br>";
+        echo "анализ: <br>";
+        //подготовка выражения для выбора слов и количества из таблицы word, соответствующих введенному text_d
+        $res = $pdo->prepare('SELECT word, count FROM word WHERE text_id = ?');
+        //выполнение
+        $res->execute(array($id));
+        //получение массива с результатом
+        while ($word = $res->fetch()) {
+            //вывод результата
             echo $word['word'] . " " . $word['count'] . "<br>";
         }
     }
 }
-
-//отключение от БД
-//вывод отчета
-if (!mysqli_close($link)) {                                                                 
-    echo "ошибка отключения БД: " . mysqli_error($link) . "<br>";                 
- }
-
- ?>
+?>
