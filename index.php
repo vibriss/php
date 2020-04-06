@@ -1,82 +1,52 @@
 <?php
-require 'functions.php';
+require_once 'functions_db.php';
+require_once 'functions_check.php';
+require_once 'forms.php';
+
+function debug($var) {
+    echo '<pre>';
+    if ($var) {
+        print_r ($var);
+    } else {
+        var_dump($var);
+    }
+    echo '</pre>';
+}
+
+function login($login, $password) {
+    $result = login_form_check($login, $password);
+    if (!$result['success']) {
+        return $result;
+    }
+    if (!login_exists_in_db($login) || !password_match_login($login, $password)) {
+        return ['success' => false, 'errors' => ['логин или пароль неверный']];
+    }       
+    
+    $_SESSION['login'] = $login;
+    header("location:index.php");
+    exit();
+}
+
 session_start();
 
-//если нет метки сессии, предложить войти/зарегистрироваться
-if (isset($_SESSION['login']) == false) {
-    ?>
-    <form method="POST" action="authorization.php" enctype="multipart/form-data">
-    <button type="submit">вход</button>
-    </form>
-    <form method="POST" action="registration.php" enctype="multipart/form-data">
-    <button type="submit">регистрация</button>
-    </form>
-    <?php
-}
- //если метка сессии установлена, вывести логин и кнопку выхода из учетки
- else {
-    echo "вы вошли как " . $_SESSION['login'];
-    ?>
-    <form method="POST" enctype="multipart/form-data">
-    <button type="submit" name="submit_logout">выйти из учетной записи</button>
-    </form>
-    <form method="POST" action="user_files.php" enctype="multipart/form-data">
-    <button type="submit">моя галерея</button>
-    </form>
-    <?php
-    //выход из учетной записи
-    if(isset($_POST['submit_logout'])) {
-        unset($_SESSION['login']);
-        //обновление страницы после снятия метки сессии
-        header("Refresh:0");
-    }
- }
-?>
+$attempt_login_result = ['success' => false, 'errors' => []];
 
-<table border="1" cellspacing="20" cellpadding="10">  
-    <tbody>
-        <tr>
-            
-<?php
-//переменная для отслеживания количества колонок, чтобы осуществлять вывод в новый ряд
-$number_of_row = 0;
-//вывод 12 случайных картинок в виде таблицы из трех колонок
-$result = query ('SELECT image_name FROM images ORDER BY rand() LIMIT 12', null);
-while ($result_array = $result->fetch()) {
-    $image_path = "img\\" .$result_array['image_name'];
-    if ($number_of_row < 3) {
-        ?>
-            
-        <td>
-               
-        <?php
-        show_preview($image_path);
-        ?>
-                
-        </td>
-            
-        <?php
+if (!empty($_POST)) {
+    if(isset($_POST['submit_login'])) {
+        $attempt_login_result = login($_POST['login'], $_POST['password']);
     }
-     else {
-        ?>
-            
-        </tr>
-        <tr>
-        <td>
-                
-        <?php
-        $number_of_row = 0;
-        show_preview($image_path);
-        ?>
-                
-        </td>
-            
-        <?php
-     }
-    $number_of_row++;
+    if(isset($_POST['submit_logout'])) {
+        logout();
+    }
 }
-?>
-        
-        </tr>
-    </tbody>
-</table>
+
+if (!isset($_SESSION['login'])) {
+    show_login_form($attempt_login_result['errors']);
+    echo '<a href="registration.php">регистрация</a>';
+} else {
+    echo 'вы вошли как ' . $_SESSION['login'];
+    show_logout_form();
+    echo '<a href="my_gallery.php">моя галерея</a>';
+}
+
+show_gallery(get_gallery_data(12, true));
