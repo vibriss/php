@@ -1,7 +1,7 @@
-<?php 
-require_once 'functions_db.php';
-require_once 'functions_check.php';
-require_once 'forms.php';
+<?php
+require_once 'functions/db.php';
+require_once 'functions/check.php';
+require_once 'functions/forms.php';
 
 function registration($login, $password) {
     $result = login_form_check($login, $password);

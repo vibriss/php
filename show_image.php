@@ -1,5 +1,6 @@
 <?php
-require_once 'functions_db.php';
+require_once 'functions/db.php';
+require_once 'functions/check.php';
 
 $image_id = $_GET['image'];
 
@@ -10,5 +11,6 @@ if ($image_path == null) {
 }
 
 increment_img_counter($image_id);
-
-echo '<img src="' . $image_path. '"></a>';
+echo '</br><a href="' . $_SERVER['HTTP_REFERER'] . '">вернуться</a>';
+echo '<div><img src="' . $image_path. '"></div>';
+echo '</br><a href="' . $_SERVER['HTTP_REFERER'] . '">вернуться</a>';

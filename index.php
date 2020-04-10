@@ -1,17 +1,7 @@
 <?php
-require_once 'functions_db.php';
-require_once 'functions_check.php';
-require_once 'forms.php';
-
-function debug($var) {
-    echo '<pre>';
-    if ($var) {
-        print_r ($var);
-    } else {
-        var_dump($var);
-    }
-    echo '</pre>';
-}
+require_once 'functions/db.php';
+require_once 'functions/check.php';
+require_once 'functions/forms.php';
 
 function login($login, $password) {
     $result = login_form_check($login, $password);
