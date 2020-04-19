@@ -56,3 +56,4 @@ if ($action_result['success']) {
 }
 
 show_my_gallery(get_user_gallery_data($_SESSION['login']));
+User::get_current_user()->gallery()->show();

@@ -3,3 +3,4 @@ temp.php
 php_errors.log
 /img
 /nbproject
+/cache/*

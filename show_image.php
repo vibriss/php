@@ -1,16 +1,18 @@
 <?php
-require_once 'functions/db.php';
-require_once 'functions/check.php';
+require_once 'functions/utils.php';
+require_once 'classes/image.php';
+require_once 'classes/TPL.php';
 
-$image_id = $_GET['image'];
+try {
+    $image = new Image(get_input_integer(INPUT_GET, 'image'));
+    $image->increment_view_count();
 
-$image_path = get_img_path_by_id($image_id);
-if ($image_path == null) {
-    echo 'картинка отсутствует в базе';
-    exit();
+    $template = TPL::getInstance();
+    $template->assign([
+        'return_url' => get_input_url(INPUT_SERVER, 'HTTP_REFERER'),
+        'image'      => $image
+    ]);
+    $template->display('show_image.tpl');    
+} catch (Exception $ex) {
+    echo $ex->getMessage();
 }
-
-increment_img_counter($image_id);
-echo '</br><a href="' . $_SERVER['HTTP_REFERER'] . '">вернуться</a>';
-echo '<div><img src="' . $image_path. '"></div>';
-echo '</br><a href="' . $_SERVER['HTTP_REFERER'] . '">вернуться</a>';

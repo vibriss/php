@@ -1,16 +1,6 @@
 <?php
 require_once 'functions/db.php';
 
-function debug($var) {
-    echo '<pre>';
-    if ($var) {
-        print_r ($var);
-    } else {
-        var_dump($var);
-    }
-    echo '</pre>';
-}
-
 function login_form_check($login, $password) {
     $result['errors'] = [];
     $login = trim($login);
