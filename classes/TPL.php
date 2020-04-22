@@ -6,6 +6,14 @@ class TPL {
     
     private static $_instance = null;
     
+    public static function getInstance() {
+        if (self::$_instance != null) {
+            return self::$_instance;
+        }
+        new self;
+        return self::$_instance;
+    }
+    
     private function __construct() {
         $smarty_config = parse_ini_file(self::CONFIG_FILENAME);
         
@@ -17,14 +25,13 @@ class TPL {
         $smarty->cache_dir    = $smarty_config['cache_dir'];
         $smarty->debugging    = $smarty_config['debugging'];
         
+        $smarty->assign([
+            'messages' => $_SESSION['messages'] ?? [],
+            'errors'   => $_SESSION['errors'] ?? []
+        ]);
+        $_SESSION['messages'] = [];
+        $_SESSION['errors'] = [];
+        
         self::$_instance = $smarty; 
-    }
-    
-    public static function getInstance() {
-        if (self::$_instance != null) {
-            return self::$_instance;
-        }
-        new self;
-        return self::$_instance;
     }
 }

@@ -3,7 +3,7 @@ require_once 'classes/Image.php';
 
 abstract class Gallery {
     const TEMPLATE = '';
-    protected $_images;
+    protected $_images = [];
     
     public function __construct($image_ids) {
         foreach ($image_ids as $image_id) {
@@ -14,6 +14,6 @@ abstract class Gallery {
     public function show() {
         $template = TPL::getInstance();
         $template->assign('images', $this->_images);
-        $template->display(static::TEMPLATE);
+        return $template->fetch(static::TEMPLATE);
     }
 }

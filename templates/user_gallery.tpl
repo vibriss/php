@@ -1,20 +1,17 @@
-{if count($images) == 0}
-    <div>в этой галерее пока ничего нет<div/>
-{else}
-    <form method="POST" enctype="multipart/form-data">
-        <table border="1" cellspacing="20" cellpadding="10">
-            <tr>
-            {foreach $images as $key => $image}
-                <td valign = "top">
-                    {$image->show()}
-                    <input type="checkbox" name="img_id_to_delete[]" value="$image->get_id()">
-                </td>
-                {if ($key + 1) is div by 4}
-                    </tr><tr>
-                {/if}
-            {/foreach}
-            </tr>
-        </table>
-        <button type="submit" name="submit_delete">удалить</button>
-    </form>
+{include file ="user_login.tpl"}
+<div><a href="index.php">вернуться</a></div>
+<form method="POST" action="action_upload.php" enctype="multipart/form-data">
+    <input type="file" name="file">
+    <button type="submit" name="submit_upload">загрузить</button>
+</form>
+{if !empty($errors)}
+    {foreach $errors as $error}
+        <div>{$error}</div> 
+    {/foreach}
 {/if}
+{if !empty($messages)}
+    {foreach $messages as $message}
+        <div>{$message}</div> 
+    {/foreach}
+{/if}
+{$user->gallery()->show()}

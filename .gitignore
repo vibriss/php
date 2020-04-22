@@ -1,6 +1,5 @@
-create_db.php
-temp.php
+test.php
 php_errors.log
-/img
+/img/*
 /nbproject
 /cache/*

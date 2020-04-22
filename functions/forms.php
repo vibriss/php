@@ -1,4 +1,5 @@
 <?php
+
 function show_login_form($errors = []) {
     echo '<form method="POST" enctype="multipart/form-data">
              логин <input name="login" type="text"><br>
