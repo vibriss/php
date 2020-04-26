@@ -25,11 +25,3 @@ function get_input_url($source, $name) {
     }
     return $url;
 }
-
-function get_input_string($source, $name) {
-    $string = filter_input($source, $name, FILTER_VALIDATE_REGEXP, '/[a-zA-Z\s]+/');
-    if (!$string) {
-        throw new Exception("параметр $name не строка");
-    }
-    return $string;
-}

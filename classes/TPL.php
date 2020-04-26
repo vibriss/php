@@ -34,4 +34,16 @@ class TPL {
         
         self::$_instance = $smarty; 
     }
+    
+    public static function add_error($error) {
+        if (is_array($error)) {
+            $_SESSION['errors'] = array_merge($_SESSION['errors'], $error);
+        } else {
+            $_SESSION['errors'][] = $error;
+        }
+    }
+    
+    public static function add_message($message) {
+        $_SESSION['messages'][] = $message;  
+    }
 }

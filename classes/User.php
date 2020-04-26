@@ -7,20 +7,25 @@ class User{
     protected $_login;
     protected $_pwd_hash;
     protected $_gallery;
-    protected static $_current_user; //TODO доделать
+    protected static $_current_user;
 
     public function __construct($id, $login, $pwd_hash) {
         $this->_id = $id;
         $this->_login = $login;
         $this->_pwd_hash = $pwd_hash;
     }
-    
+ 
     public static function get_current_user() {
+        if (isset(self::$_current_user)) {
+            return self::$_current_user;
+        }
         if (isset($_SESSION['login'])) {
-            return self::get_by_login($_SESSION['login']);
-        } else {
-            return new self(null, 'guest', null);
-        }    
+            self::$_current_user = self::get_by_login($_SESSION['login']);
+        }
+        if (!self::$_current_user) {
+            self::$_current_user = new self(null, 'guest', null);
+        }
+        return self::$_current_user;
     }
     
     public static function get_by_login($login) {
@@ -55,63 +60,70 @@ class User{
         return $this->_gallery = new UserGallery($this->_login, $image_ids);
     }
     
-///////////////////////////////////////////////   
-    
     public static function login($login, $password) {
-        $result = self::login_form_check($login, $password);
-        if (!$result['success']) {
-            return $result;
-        }
-        if (!self::login_exists_in_db($login) || !self::password_match_login($login, $password)) {
-            return ['success' => false, 'errors' => ['логин или пароль неверный']];
-        }       
-        $_SESSION['login'] = $login;
-    }
-    
-    public static function login_form_check($login, $password) {
-        $result['errors'] = [];
         $login = trim($login);
         $password = trim($password);
-
-        if (!strlen($login) && !strlen($password)) {
-            return ['success' => false, 'errors' => []];
+        if (!strlen($login) || !strlen($password)) {
+            return '';
         }
-
-        if (!strlen($login)) {
-            $result['errors'][] = 'поле ввода логина не может быть пустым';
-        } else {
-            if(!preg_match("/^[a-zA-Z0-9]+$/",$login)) {
-                $result['errors'][] = 'логин может состоять только из букв английского алфавита и цифр';   
-            }
-            if(strlen($login) < 3) {
-                $result['errors'][] = 'логин должен содержать не менее 3 символов';
-            }
-        }
-
-        if (!strlen($password)) {
-            $result['errors'][] = 'поле ввода пароля не может быть пустым';
-        } else {
-            if(strlen($password) < 3) {
-                $result['errors'][] = 'пароль должен содержать не менее 3 символов';
-            }
-        }
-
-        $result['success'] = empty($result['errors']);
-        return $result;
+        
+        if (!self::login_exists_in_db($login) || !self::password_matches_login($login, $password)) {
+            return 'логин или пароль неверный';
+        }      
+        
+        return true;
     }
     
-    public static function password_match_login($login, $password) {
+    public static function registration($login, $password) {
+        $login = trim($login);
+        $password = trim($password);
+        $errors = [];
+        
+        if (!strlen($login)) {
+            $errors[] = 'поле ввода логина не может быть пустым';                
+        } else {
+            if (!preg_match("/^[a-zA-Z0-9]+$/", $login)) {
+                $errors[] = 'логин может состоять только из букв английского алфавита и цифр';   
+            }
+            if (strlen($login) < 3) {
+                $errors[] = 'логин должен содержать не менее 3 символов';
+            }
+            if (self::login_exists_in_db($login)) {
+                $errors[] = 'логин уже занят';
+            }
+        }
+        
+        if (!strlen($password)) {
+            $errors[] = 'поле ввода пароля не может быть пустым';
+        } else {
+            if(strlen($password) < 3) {
+                $errors[] = 'пароль должен содержать не менее 3 символов';
+            }
+        }
+        
+        if (!empty($errors)) {
+            return $errors;
+        }
+        
+        DB::getInstance()->insert(
+            'INSERT INTO users (login, password) values (:login, :password)',
+            ['login' => $login, 'password' => password_hash($password, PASSWORD_DEFAULT)]
+        );
+        return true;
+    }
+
+    protected static function login_exists_in_db($login) {
+        $result = DB::getInstance()->select_one('SELECT count(login) AS exist FROM users WHERE login = ?', [$login], 'exist');
+        return $result == 1;
+    }
+    
+    protected static function password_matches_login($login, $password) {
         $result = DB::getInstance()->select_one('SELECT password FROM users WHERE login = ?', [$login], 'password');
         if ($result) {
             return password_verify($password, $result);
         } else {
             return false;
         }
-    }
-    
-    public static function login_exists_in_db($login) {
-        $result = DB::getInstance()->select_one('SELECT count(login) AS exist FROM users WHERE login = ?', [$login], 'exist');
-        return $result == 1;
     }
     
     public static function get_user_id_by_login($login) {

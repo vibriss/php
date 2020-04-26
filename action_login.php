@@ -3,11 +3,13 @@ require_once 'classes/User.php';
 
 session_start();
 
-$attempt_login_result = ['success' => false, 'errors' => []];
-
-if (!empty($_POST) && isset($_POST['submit_login'])) {
-    $attempt_login_result = User::login($_POST['login'], $_POST['password']);
-    $_SESSION['errors'] = $attempt_login_result['errors'];
-    header("location:index.php");
-    exit();
+if (!empty($_POST) && isset($_POST['login']) && isset($_POST['password'])) {
+    $login_result = User::login($_POST['login'], $_POST['password']);
+    if ($login_result === true) {
+        $_SESSION['login'] = $_POST['login'];
+    } else {
+        TPL::add_error($login_result);
+    }
 }
+
+header("location:index.php");
