@@ -1,13 +1,13 @@
-<?php
+﻿<?php
 //подключение к БД
 //вывод отчета
-$link = mysqli_connect("localhost", "root", "hhhhhh");                          
+$link = mysqli_connect("localhost", "gallery", "hhhhhh");                          
 if (!$link) {                                                                   
     echo "ошибка подключения к БД<br>";         
 }
 
 //создание бд
-$query_db = "create database userdb";
+$query_db = "create database gallery";
 //вывод отчета
 if (mysqli_query($link, $query_db)) {
     echo "БД создана<br>";
@@ -16,7 +16,7 @@ if (mysqli_query($link, $query_db)) {
 }
 
 //выбор бд
-$selected_db = mysqli_select_db($link, "userdb");                               //выбор БД
+$selected_db = mysqli_select_db($link, "gallery");                               //выбор БД
 //вывод отчета
 if ($selected_db) {                                                            
     echo "БД выбрана<br>";

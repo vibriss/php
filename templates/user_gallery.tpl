@@ -6,5 +6,4 @@
     {include file ="errors_and_messages.tpl"}
 </form>
 
-
 {$user->gallery()->show()}
